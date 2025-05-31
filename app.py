@@ -11,7 +11,8 @@ from flask_socketio import SocketIO, send, join_room, leave_room, emit
 # Импортируем логику игры
 from game_logic import mode_1_1
 from game_logic.mode_1_2 import Game  # импорт класса Game из mode_1_2
-from game_logic.question_processor import QuestionProcessor
+
+from game_logic.mode_2_1 import Game2_1
 
 app = Flask(__name__)
 app.secret_key = 'some_secret_key'  # для сессий
@@ -20,6 +21,8 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 games = {}  # хранилище активных игр для режима 1.2: {game_id: Game}
 
 room_roles = {}  # {room_code: {'guesser': session_id, 'creator': session_id}}
+
+game_sessions = {}  # {'ROOM123': Game2_1()}
 
 # Хранилище комнат для сетевой игры режимов 2.1 и 2.2
 rooms = {}
@@ -381,63 +384,23 @@ def handle_chat_message(data):
     room = data.get('room')
     session_id = data.get('session_id')
     message = data.get('message')
-    role = None
+    
+    if not room or not session_id:
+        return
 
     # Определяем роль отправителя
+    sender_role = None
     if room in room_roles:
-        for r, sid in room_roles[room].items():
-            if sid == session_id:
-                role = r
-                break
+        if room_roles[room]['guesser'] == session_id:
+            sender_role = 'Угадывающий'
+        elif room_roles[room]['creator'] == session_id:
+            sender_role = 'Загадывающий'
 
-    # Название отправителя
-    sender = "Неизвестный"
-    if role == "guesser":
-        sender = "Угадывающий"
-    elif role == "creator":
-        sender = "Загадывающий"
-
-    emit('chat_message', {
-        'sender': sender,
-        'message': message
-    }, room=room)
-    
-@socketio.on('process_question')
-def handle_process_question(data):
-    room = data['room']
-    session_id = data['session_id']
-    question = data['question']
-    
-    if room not in room_roles or room not in rooms:
-        emit('error', {'message': 'Комната не найдена'}, to=request.sid)
-        return
-    
-    secret_number = rooms[room].get('secret_number')
-    if secret_number is None:
-        emit('error', {'message': 'Число еще не загадано'}, to=request.sid)
-        return
-    
-    # Обработка вопроса
-    response, dim_numbers = QuestionProcessor.process_question(question, secret_number)
-    
-    # Проверка угадывания числа
-    if question.lower().startswith('это число') and response.startswith('Поздравляем'):
-        emit('game_won', {
-            'message': response,
-            'secret': secret_number,
-            'winner': session_id
+    if sender_role:
+        emit('chat_message', {
+            'sender': sender_role,
+            'message': message
         }, room=room)
-        return
-    
-    if response:
-        emit('question_response', {
-            'response': response,
-            'dim_numbers': dim_numbers,
-            'question': question
-        }, room=room)
-    else:
-        # Если вопрос не распознан, отправляем как обычное сообщение
-        handle_chat_message(data)
         
 @app.route('/game2/guesser')
 def game_guesser():
@@ -452,6 +415,41 @@ def game_creator():
 @app.route('/debug/templates')
 def debug_templates():
     return str(os.listdir('templates/game2'))  # Должен показать ['guesser.html', 'creator.html']
+    
+    @socketio.on('guess_logic')
+def guess_logic(data):
+    room = data['room']
+    session_id = data['session_id']
+    msg = data['message']
+
+    if room_roles[room]['guesser'] != session_id:
+        return
+
+    game = game_sessions.setdefault(room, Game2_1())
+    game.handle_question(msg)
+
+@socketio.on('reply_logic')
+def reply_logic(data):
+    room = data['room']
+    session_id = data['session_id']
+    answer = data['answer']
+    secret = data['secret']
+
+    if room_roles[room]['creator'] != session_id:
+        return
+
+    game = game_sessions.setdefault(room, Game2_1())
+    game.set_secret(secret)
+    result = game.apply_answer(answer)
+
+    if 'dim' in result:
+        emit('filter_numbers', {'dim': result['dim']}, to=room_roles[room]['guesser'])
+    elif 'guess' in result:
+        emit('guess_result', {
+            'correct': result['correct'],
+            'value': result['guess']
+        }, to=room_roles[room]['guesser'])
+
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
