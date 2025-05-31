@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Угадывающий</title>
+  <link rel="stylesheet" href="style_guesser.css">
+</head>
+<body>
+  <div class="chat-container">
+    <div class="messages" id="messages"></div>
+    <div class="input-area">
+      <input type="text" id="chat-input" placeholder="Задай вопрос...">
+      <button onclick="sendMessage()">Отправить</button>
+    </div>
+  </div>
+
+  <div class="number-panel">
+    <h3>Диапазон: -1000 до 1000</h3>
+    <div id="number-grid" class="number-grid"></div>
+    <div class="pagination">
+      <button onclick="prevPage()">◀</button>
+      <span id="page-number">1</span>
+      <button onclick="nextPage()">▶</button>
+    </div>
+  </div>
+
+  <!-- Подключаем Socket.IO -->
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script src="script_guesser.js"></script>
+</body>
+</html>

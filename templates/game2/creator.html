@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Загадывающий</title>
+  <link rel="stylesheet" href="style_creator.css">
+</head>
+<body>
+  <div class="chat-container">
+    <div class="messages" id="messages"></div>
+    <div class="input-area">
+      <input type="text" id="chat-input" placeholder="Ответь на вопрос...">
+      <button onclick="sendMessage()">Отправить</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>Ты — Загадывающий</h3>
+    <p>Загадай число от -1000 до 1000:</p>
+    <input type="number" id="secret-number" value="0" min="-1000" max="1000">
+    <button onclick="confirmNumber()">Подтвердить</button>
+    <p id="status"></p>
+  </div>
+
+  <!-- Подключаем Socket.IO -->
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script src="script_creator.js"></script>
+</body>
+</html>
