@@ -417,44 +417,54 @@ def debug_templates():
     return str(os.listdir('templates/game2'))  # Должен показать ['guesser.html', 'creator.html']
     
 @socketio.on('guess_logic')
-def guess_logic(data):
+def handle_guess_logic(data):
     room = data['room']
     session_id = data['session_id']
-    msg = data['message']
-
+    message = data['message']
+    
+    # Проверяем, что отправитель действительно угадывающий
     if room_roles.get(room, {}).get('guesser') != session_id:
-        print(f"[DEBUG] Не угадывающий: {session_id}")
         return
-
+    
+    # Получаем или создаем игру для этой комнаты
     game = game_sessions.setdefault(room, Game2_1())
-    game.handle_question(msg)
-    print(f"[DEBUG] Вопрос обработан: {msg}")
+    game.handle_question(message)
+    
+    # Уведомляем создателя, что нужно ответить
+    creator_sid = session_to_sid.get(room_roles[room]['creator'])
+    if creator_sid:
+        emit('need_answer', {'question': message}, to=creator_sid)
 
 
 @socketio.on('reply_logic')
-def reply_logic(data):
+def handle_reply_logic(data):
     room = data['room']
     session_id = data['session_id']
     answer = data['answer']
-    secret = data['secret']
-
+    secret = data.get('secret')
+    
+    # Проверяем, что отправитель действительно создатель
     if room_roles.get(room, {}).get('creator') != session_id:
-        print(f"[DEBUG] Не загадывающий: {session_id}")
         return
-
+    
     game = game_sessions.setdefault(room, Game2_1())
-    game.set_secret(secret)
+    if secret is not None:
+        game.set_secret(secret)
+    
     result = game.apply_answer(answer)
-
-    print(f"[DEBUG] Ответ: {answer}, результат: {result}")
-
+    
+    # Отправляем результат угадывающему
+    guesser_sid = session_to_sid.get(room_roles[room]['guesser'])
+    if not guesser_sid:
+        return
+    
     if 'dim' in result:
-        emit('filter_numbers', {'dim': result['dim']}, to=room_roles[room]['guesser'])
+        emit('filter_numbers', {'dim': result['dim']}, to=guesser_sid)
     elif 'guess' in result:
         emit('guess_result', {
             'correct': result['correct'],
             'value': result['guess']
-        }, to=room_roles[room]['guesser'])
+        }, to=guesser_sid)
 
 
 

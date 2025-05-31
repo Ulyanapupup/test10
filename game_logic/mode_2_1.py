@@ -15,12 +15,13 @@ class Game2_1:
         self.pending_check = None
         self.last_guess = None
 
-        if m := re.search(r"больше\s*(-?\d+)", msg):
-            self.pending_check = {'type': '>', 'value': int(m.group(1))}
-        elif m := re.search(r"меньше\s*(-?\d+)", msg):
-            self.pending_check = {'type': '<', 'value': int(m.group(1))}
-        elif m := re.search(r"это\s+число\s*(-?\d+)", msg):
-            self.last_guess = int(m.group(1))
+        # Улучшенное распознавание вопросов
+        if m := re.search(r"(число\s*)?больше\s*(-?\d+)", msg):
+            self.pending_check = {'type': '>', 'value': int(m.group(2))}
+        elif m := re.search(r"(число\s*)?меньше\s*(-?\d+)", msg):
+            self.pending_check = {'type': '<', 'value': int(m.group(2))}
+        elif m := re.search(r"(это\s*число\s*|число\s*это\s*|равно\s*)?(-?\d+)", msg):
+            self.last_guess = int(m.group(2))
 
 
     def apply_answer(self, answer):
