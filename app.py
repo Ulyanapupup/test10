@@ -416,7 +416,7 @@ def game_creator():
 def debug_templates():
     return str(os.listdir('templates/game2'))  # Должен показать ['guesser.html', 'creator.html']
     
-    @socketio.on('guess_logic')
+@socketio.on('guess_logic')
 def guess_logic(data):
     room = data['room']
     session_id = data['session_id']
