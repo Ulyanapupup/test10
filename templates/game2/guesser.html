@@ -159,6 +159,7 @@
 	// Эти значения будут подставлены Flask'ом
     const sessionId = "{{ session['session_id'] }}";
     const room = "{{ room }}";
+	const role = "guesser";
 	
 	// После socket = io();
 	socket.emit("join_game_room", {

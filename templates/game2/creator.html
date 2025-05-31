@@ -95,6 +95,7 @@
 	// Эти переменные подставит Flask (у тебя в app.py это уже есть)
     const sessionId = "{{ session['session_id'] }}";
     const room = "{{ room }}";
+	const role = "creator";
 	
 	// После socket = io();
 	socket.emit("join_game_room", {
