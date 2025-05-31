@@ -422,11 +422,14 @@ def guess_logic(data):
     session_id = data['session_id']
     msg = data['message']
 
-    if room_roles[room]['guesser'] != session_id:
+    if room_roles.get(room, {}).get('guesser') != session_id:
+        print(f"[DEBUG] Не угадывающий: {session_id}")
         return
 
     game = game_sessions.setdefault(room, Game2_1())
     game.handle_question(msg)
+    print(f"[DEBUG] Вопрос обработан: {msg}")
+
 
 @socketio.on('reply_logic')
 def reply_logic(data):
@@ -435,12 +438,15 @@ def reply_logic(data):
     answer = data['answer']
     secret = data['secret']
 
-    if room_roles[room]['creator'] != session_id:
+    if room_roles.get(room, {}).get('creator') != session_id:
+        print(f"[DEBUG] Не загадывающий: {session_id}")
         return
 
     game = game_sessions.setdefault(room, Game2_1())
     game.set_secret(secret)
     result = game.apply_answer(answer)
+
+    print(f"[DEBUG] Ответ: {answer}, результат: {result}")
 
     if 'dim' in result:
         emit('filter_numbers', {'dim': result['dim']}, to=room_roles[room]['guesser'])
@@ -449,6 +455,7 @@ def reply_logic(data):
             'correct': result['correct'],
             'value': result['guess']
         }, to=room_roles[room]['guesser'])
+
 
 
 if __name__ == '__main__':

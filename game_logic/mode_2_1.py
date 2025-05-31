@@ -22,6 +22,7 @@ class Game2_1:
         elif m := re.search(r"это\s+число\s*(-?\d+)", msg):
             self.last_guess = int(m.group(1))
 
+
     def apply_answer(self, answer):
         answer = answer.lower()
         if self.pending_check:

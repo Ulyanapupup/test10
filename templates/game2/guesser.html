@@ -202,6 +202,7 @@
 	  const dimList = new Set(data.dim);
 	  dimmedNumbers = new Set([...dimmedNumbers, ...dimList]);
 	  renderPage();  // обновляет таблицу
+	  console.log("Получен результат", data)
 	});
 	
 	socket.on('guess_result', (data) => {
@@ -223,6 +224,7 @@
 		: `❌ Это не число ${data.value}`;
 	  document.body.appendChild(overlay);
 	  setTimeout(() => overlay.remove(), 3000);
+	  console.log("Получен результат", data)
 	});
 
 
