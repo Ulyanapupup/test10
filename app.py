@@ -12,8 +12,6 @@ from flask_socketio import SocketIO, send, join_room, leave_room, emit
 from game_logic import mode_1_1
 from game_logic.mode_1_2 import Game  # импорт класса Game из mode_1_2
 
-from game_logic.mode_2_1 import Game2_1
-
 app = Flask(__name__)
 app.secret_key = 'some_secret_key'  # для сессий
 socketio = SocketIO(app, cors_allowed_origins="*")
@@ -24,16 +22,8 @@ room_roles = {}  # {room_code: {'guesser': session_id, 'creator': session_id}}
 
 game_sessions = {}  # {'ROOM123': Game2_1()}
 
-# Хранилище комнат для сетевой игры режимов 2.1 и 2.2
+# Хранилище комнат для сетевой игры 2.1
 rooms = {}
-# Формат rooms:
-# rooms = {
-#   'ROOMCODE': {
-#       'players': set(session_ids),
-#       'creator': session_id,
-#       'mode': None  # '2.1' или '2.2' после выбора
-#   }
-# }
 
 session_to_sid = {}  # сопоставление session_id -> socket.id
 
@@ -62,7 +52,7 @@ def game_mode(mode):
         return render_template('game_mode_1_1.html')
     elif mode == '1.2':
         return render_template('game_mode_1_2.html')
-    elif mode in ['2.1', '2.2']:
+    elif mode == '2.1':
         return render_template('room_setup.html', mode=mode)
     else:
         return "Неизвестный режим", 404
@@ -196,14 +186,6 @@ def game_mode_2_1():
     # if not room or room not in rooms:
     #     return redirect(url_for('room_setup'))
     return render_template('game_mode_2_1.html', room=room)
-
-
-@app.route('/game_mode_2_2')
-def game_mode_2_2():
-    room = request.args.get('room')
-    # if not room or room not in rooms:
-        # return redirect(url_for('room_setup'))
-    return render_template('game_mode_2_2.html', room=room)
 
 @socketio.on('choose_mode')
 def on_choose_mode(data):
